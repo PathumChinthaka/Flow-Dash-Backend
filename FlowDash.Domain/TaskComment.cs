@@ -1,6 +1,6 @@
 ﻿namespace FlowDash.Domain
 {
-    internal class TaskComment
+    public partial class TaskComment
     {
         public int Id { get; set; }
         public int TaskId { get;  set; }
