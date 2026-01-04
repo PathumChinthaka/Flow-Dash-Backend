@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public int TaskId { get; set; }
-        public string Action { get; set; } = string.Empty;
+        public string Action { get; set; } = null!;
         public string? OldValue { get; set; }
         public string? NewValue { get; set; }
         public int ChangedById { get; set; }

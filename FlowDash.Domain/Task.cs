@@ -12,11 +12,13 @@
         public int? UpdatedById { get; set; }
         public TaskStatus Status { get; set; }
         public DateTime CreatedOn { get; set; }
-        public DateTime UpdatedOn { get; set; }
+        public DateTime? UpdatedOn { get; set; }
         public bool IsActive { get; set; } = true;
         public virtual User? Assignee { get; set; }
         public virtual User CreatedBy { get; set; } = null!;
         public virtual Project Project { get; set; } = null!;
         public virtual User? UpdatedBy { get; set; }
+        public virtual ICollection<TaskActivityLog> TaskActivityLogs { get; set; } = new List<TaskActivityLog>();
+        public virtual ICollection<TaskComment> TaskComments { get; set; } = new List<TaskComment>();
     }
 }
