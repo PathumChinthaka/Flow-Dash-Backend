@@ -9,6 +9,8 @@ namespace FlowDash.Infrastructure.EntityConfigurations
         public void Configure(EntityTypeBuilder<Team> builder)
         {
             builder.HasKey(t => t.Id);
+            builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
+            builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 
             builder.Property(t => t.Name)
                    .IsRequired()

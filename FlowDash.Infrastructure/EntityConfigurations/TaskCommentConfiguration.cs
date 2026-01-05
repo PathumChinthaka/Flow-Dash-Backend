@@ -9,6 +9,7 @@ namespace FlowDash.Infrastructure.EntityConfigurations
         public void Configure(EntityTypeBuilder<TaskComment> builder)
         {
             builder.HasKey(tc => tc.Id);
+            builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
 
             builder.HasOne(tc => tc.Task)
                    .WithMany(t => t.TaskComments)

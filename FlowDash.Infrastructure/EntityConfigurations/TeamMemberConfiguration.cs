@@ -9,6 +9,8 @@ namespace FlowDash.Infrastructure.EntityConfigurations
         public void Configure(EntityTypeBuilder<TeamMember> builder)
         {
             builder.HasKey(tm => new { tm.TeamId, tm.UserId });
+            builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
+            builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 
             builder.HasOne(tm => tm.Team)
                    .WithMany(t => t.TeamMembers)
