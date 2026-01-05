@@ -1,13 +1,25 @@
-﻿using FlowDash.Domain;
-using TaskModel = FlowDash.Domain.Task;
+﻿using FlowDash.Application.Common.Interfaces.Service;
+using FlowDash.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using TaskModel = FlowDash.Domain.Task;
 
 namespace FlowDash.Infrastructure
 {
-    public class FlowDashDbContext : DbContext
+    public partial class FlowDashDbContext : DbContext
     {
-        public FlowDashDbContext(DbContextOptions<FlowDashDbContext> options) : base(options)
+        private readonly ITenantIdentifierService _tenantIdentifier;
+        private readonly IConfiguration _configuration;
+
+        public FlowDashDbContext(ITenantIdentifierService tenantIdentifier, IConfiguration configuration)
         {
+            _tenantIdentifier = tenantIdentifier;
+            _configuration = configuration;
+        }
+        public FlowDashDbContext(DbContextOptions<FlowDashDbContext> options, ITenantIdentifierService tenantIdentifier, IConfiguration configuration) : base(options)
+        {
+            _tenantIdentifier = tenantIdentifier;
+            _configuration = configuration;
         }
 
         public DbSet<Notification> Notifications => Set<Notification>();
@@ -21,11 +33,29 @@ namespace FlowDash.Infrastructure
         public DbSet<User> Users => Set<User>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+            optionsBuilder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection") + $"SearchPath={_tenantIdentifier.GetCurrentTenantName()}",
+            options =>
+            {
+                options.CommandTimeout(_configuration.GetValue<int>("DefaultConnection:Timeout")); // Timeout in seconds
+            });
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.HasPostgresExtension("pg_buffercache")
+                .HasPostgresExtension("pg_stat_statements");
+
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(FlowDashDbContext).Assembly);
 
-            base.OnModelCreating(modelBuilder);
+            OnModelCreatingPartial(modelBuilder);
         }
+
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
