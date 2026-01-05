@@ -9,6 +9,8 @@ namespace FlowDash.Infrastructure.EntityConfigurations
         public void Configure(EntityTypeBuilder<UserRole> builder)
         {
             builder.HasKey(ur => new { ur.UserId, ur.RoleId });
+            builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
+            builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 
             builder.HasOne(ur => ur.Role)
                    .WithMany(r => r.UserRoles)

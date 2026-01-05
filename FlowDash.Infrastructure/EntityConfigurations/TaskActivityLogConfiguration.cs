@@ -9,6 +9,7 @@ namespace FlowDash.Infrastructure.EntityConfigurations
         public void Configure(EntityTypeBuilder<TaskActivityLog> builder)
         {
             builder.HasKey(tal => tal.Id);
+            builder.Property(e => e.ChangedById).HasColumnName("ChangedBy");
 
             builder.HasOne(tal => tal.Task)
                    .WithMany(t => t.TaskActivityLogs)
