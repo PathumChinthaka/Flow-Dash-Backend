@@ -8,7 +8,11 @@ namespace FlowDash.Infrastructure.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<TaskComment> builder)
         {
-            builder.HasKey(tc => tc.Id);
+            builder.HasKey(e => e.Id).HasName("TaskComment_pkey");
+            builder.ToTable("TaskComment");
+
+            builder.Property(e => e.Id).UseIdentityAlwaysColumn();
+            builder.Property(e => e.Guid).HasColumnType("uuid");
             builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
 
             builder.HasOne(tc => tc.Task)

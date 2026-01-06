@@ -7,7 +7,11 @@ namespace FlowDash.Infrastructure.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<FlowDash.Domain.Task> builder)
         {
-            builder.HasKey(t => t.Id);
+            builder.HasKey(e => e.Id).HasName("Task_pkey");
+            builder.ToTable("Task");
+
+            builder.Property(e => e.Id).UseIdentityAlwaysColumn();
+            builder.Property(e => e.Guid).HasColumnType("uuid");
             builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
             builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 

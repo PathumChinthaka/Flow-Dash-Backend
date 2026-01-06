@@ -2,6 +2,8 @@
 {
     public partial class TeamMember
     {
+        public int Id { get; set; }
+        public Guid Guid { get; set; }
         public int TeamId { get; set; }
         public int UserId { get; set; }
         public int CreatedById { get; set; }
