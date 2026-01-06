@@ -16,6 +16,9 @@ namespace FlowDash.Infrastructure.EntityConfigurations
             builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
             builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 
+            builder.Property(n => n.IsActive)
+                   .HasDefaultValue(true);
+
             builder.Property(t => t.Name)
                    .IsRequired()
                    .HasMaxLength(150);

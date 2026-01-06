@@ -40,7 +40,7 @@ namespace FlowDash.Infrastructure
             optionsBuilder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection") + $"SearchPath={_tenantIdentifier.GetCurrentTenantName()}",
             options =>
             {
-                options.CommandTimeout(_configuration.GetValue<int>("DefaultConnection:Timeout")); // Timeout in seconds
+                options.CommandTimeout(30); // Timeout in seconds
             });
         }
 

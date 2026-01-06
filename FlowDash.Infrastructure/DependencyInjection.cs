@@ -62,37 +62,17 @@ namespace FlowDash.Infrastructure
 
         private static bool IsMatched(string origin, string[] allowedOrigins, string[] allowedEndPatterns)
         {
-            try
-            {
-                var uri = new Uri($"https://{origin.Trim()}"); // Ensure it has a valid scheme for parsing
-                string host = uri.Host;
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                return false;
 
-                // Exact match with allowedOrigins
-                if (allowedOrigins.Contains(host))
-                {
-                    return true;
-                }
+            var host = uri.Host;
 
-                // Allow all subdomains of allowedEndPatterns (e.g., *.example.com)
-                foreach (var pattern in allowedEndPatterns)
-                {
-                    if (host == pattern) // If the exact domain matches
-                    {
-                        return true;
-                    }
+            if (allowedOrigins.Contains(host, StringComparer.OrdinalIgnoreCase))
+                return true;
 
-                    if (host.EndsWith("." + pattern)) // Only allow valid subdomains, not just string matches
-                    {
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-                return false; // Invalid origin format (e.g., missing scheme)
-            }
-
-            return false;
+            return allowedEndPatterns.Any(pattern =>
+                host.Equals(pattern, StringComparison.OrdinalIgnoreCase) ||
+                host.EndsWith("." + pattern, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

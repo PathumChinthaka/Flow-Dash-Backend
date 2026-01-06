@@ -15,6 +15,9 @@ namespace FlowDash.Infrastructure.EntityConfigurations
             builder.Property(e => e.Guid).HasColumnType("uuid");
             builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
 
+            builder.Property(n => n.IsActive)
+                   .HasDefaultValue(true);
+
             builder.HasOne(tc => tc.Task)
                    .WithMany(t => t.TaskComments)
                    .HasForeignKey(tc => tc.TaskId)
