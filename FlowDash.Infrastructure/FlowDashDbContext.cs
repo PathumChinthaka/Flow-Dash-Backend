@@ -46,16 +46,27 @@ namespace FlowDash.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            var schema = ResolveSchemaSafely();
 
-            modelBuilder.HasPostgresExtension("pg_buffercache")
-                .HasPostgresExtension("pg_stat_statements");
+            if (!string.IsNullOrWhiteSpace(schema))
+            {
+                modelBuilder.HasDefaultSchema(schema);
+            }
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(FlowDashDbContext).Assembly);
 
-            OnModelCreatingPartial(modelBuilder);
+            base.OnModelCreating(modelBuilder);
         }
 
-        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+        private string? ResolveSchemaSafely()
+        {
+            // During migrations / design-time
+            if (_tenantIdentifier == null)
+                return "public";
+
+            var tenant = _tenantIdentifier.GetCurrentTenantName();
+
+            return string.IsNullOrWhiteSpace(tenant) ? "public" : tenant;
+        }
     }
 }

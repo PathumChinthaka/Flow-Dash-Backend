@@ -8,7 +8,11 @@ namespace FlowDash.Infrastructure.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<Team> builder)
         {
-            builder.HasKey(t => t.Id);
+            builder.HasKey(e => e.Id).HasName("Team_pkey");
+            builder.ToTable("Team");
+
+            builder.Property(e => e.Id).UseIdentityAlwaysColumn();
+            builder.Property(e => e.Guid).HasColumnType("uuid");
             builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
             builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 

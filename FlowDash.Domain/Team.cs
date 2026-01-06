@@ -3,6 +3,7 @@
     public partial class Team
     {
         public int Id { get; set; }
+        public Guid Guid { get; set; }
         public string Name { get; set; } = null!;
         public int CreatedById { get; set; }
         public int? UpdatedById { get; set; }

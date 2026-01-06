@@ -3,6 +3,7 @@
     public partial class TaskActivityLog
     {
         public int Id { get; set; }
+        public Guid Guid { get; set; }
         public int TaskId { get; set; }
         public string Action { get; set; } = null!;
         public string? OldValue { get; set; }

@@ -8,7 +8,11 @@ namespace FlowDash.Infrastructure.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<TaskActivityLog> builder)
         {
-            builder.HasKey(tal => tal.Id);
+            builder.HasKey(e => e.Id).HasName("TaskActivityLog_pkey");
+            builder.ToTable("TaskActivityLog");
+
+            builder.Property(e => e.Id).UseIdentityAlwaysColumn();
+            builder.Property(e => e.Guid).HasColumnType("uuid");
             builder.Property(e => e.ChangedById).HasColumnName("ChangedBy");
 
             builder.HasOne(tal => tal.Task)

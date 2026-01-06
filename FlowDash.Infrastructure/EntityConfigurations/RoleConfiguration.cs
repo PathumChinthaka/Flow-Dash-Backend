@@ -8,7 +8,11 @@ namespace FlowDash.Infrastructure.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<Role> builder)
         {
-            builder.HasKey(r => r.Id);
+            builder.HasKey(e => e.Id).HasName("Role_pkey");
+            builder.ToTable("Role");
+
+            builder.Property(e => e.Id).UseIdentityAlwaysColumn();
+            builder.Property(e => e.Guid).HasColumnType("uuid");
 
             builder.Property(r => r.Name)
                    .IsRequired()

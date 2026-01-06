@@ -5,87 +5,88 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Text.RegularExpressions;
 
 namespace FlowDash.Infrastructure.Services
 {
-    public class TenantCreationService : ITenantCreationService
+    public sealed class TenantCreationService : ITenantCreationService
     {
-        private readonly IDbConnection _dbConnection;
-        private readonly FlowDashDbContext _context;
+        private readonly IDbConnection _db;
         private readonly ITenantIdentifierService _tenantIdentifier;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<TenantCreationService> _logger;
+
+        private static readonly Regex TenantNameRegex = new(@"^[a-z][a-z0-9_]{2,30}$", RegexOptions.IgnoreCase);
 
         public TenantCreationService
         (
-            FlowDashDbContext context,
+            IDbConnection db,
             ITenantIdentifierService tenantIdentifier,
             IConfiguration configuration,
-            IDbConnection dbConnection
+            ILogger<TenantCreationService> logger
         )
         {
-            _context = context;
-            _dbConnection = dbConnection;
+            _db = db;
             _tenantIdentifier = tenantIdentifier;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task CreateSchema(string tenantName)
         {
-            var schemaExists = await _dbConnection.QueryFirstOrDefaultAsync<bool>(
-                $"SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '{tenantName}')");
+            ValidateTenantName(tenantName);
 
-            if (!schemaExists)
+            using var tx = _db.BeginTransaction();
+
+            try
             {
-                try
-                {
-                    await _dbConnection.ExecuteAsync($"CREATE SCHEMA \"{tenantName}\"");
+                await AcquireAdvisoryLock(tx);
 
-                    var script = _context.Database.GenerateCreateScript();
-                    script = Regex.Replace(script, $"CREATE SCHEMA {_tenantIdentifier.GetCurrentTenantName()}", $"CREATE SCHEMA {tenantName}");
-                    script = Regex.Replace(script, "CREATE TABLE", "CREATE TABLE IF NOT EXISTS");
-                    script = script.Replace("CREATE EXTENSION IF NOT EXISTS pg_buffercache;", "");
-                    script = script.Replace("CREATE EXTENSION IF NOT EXISTS pg_stat_statements;", "");
-                    script = script.Replace("CREATE EXTENSION IF NOT EXISTS pg_prewarm;", "");
-                    script = script.Replace("CREATE EXTENSION IF NOT EXISTS pg_stat_statements;", "");
+                if (await SchemaExists(tenantName, tx))
+                    throw new InternalServerException("Tenant schema already exists.");
 
-                    await _context.Database.ExecuteSqlRawAsync(script);
-                }
-                catch (Exception ex)
-                {
-                    await DeleteSchema(tenantName);
-                    throw new InternalServerException(ex.Message);
-                }
+                await _db.ExecuteAsync(
+                    $"CREATE SCHEMA \"{tenantName}\" AUTHORIZATION CURRENT_USER;",
+                    transaction: tx);
+
+                await ApplyMigrationsToSchema(tenantName);
+
+                tx.Commit();
+
+                _logger.LogInformation("Tenant schema {Tenant} created successfully", tenantName);
             }
-            else
+            catch (Exception ex)
             {
-                throw new InternalServerException("Schema already exists");
+                tx.Rollback();
+                _logger.LogError(ex, "Failed to create tenant schema {Tenant}", tenantName);
+                throw new InternalServerException("Failed to create tenant schema");
             }
         }
 
         public async Task DeleteSchema(string tenantName)
         {
+            ValidateTenantName(tenantName);
+
+            using var tx = _db.BeginTransaction();
+
             try
             {
-                var schemaExists = await _dbConnection.QueryFirstOrDefaultAsync<bool>(
-                    $"SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = '{tenantName}')",
-                    new { tenantName });
+                if (!await SchemaExists(tenantName, tx))
+                    throw new InternalServerException("Tenant schema does not exist.");
 
-                if (schemaExists)
-                {
-                    await _dbConnection.ExecuteAsync($"DROP SCHEMA IF EXISTS \"{tenantName}\" CASCADE");
-                }
+                await _db.ExecuteAsync(
+                    $"DROP SCHEMA \"{tenantName}\" CASCADE;",
+                    transaction: tx);
 
-                else
-                {
-                    throw new InternalServerException("Schema Not exists");
-                }
+                tx.Commit();
             }
-
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new InternalServerException("An error occured when delete schema");
+                tx.Rollback();
+                _logger.LogError(ex, "Failed to delete tenant schema {Tenant}", tenantName);
+                throw new InternalServerException("Failed to delete tenant schema");
             }
         }
 
@@ -93,85 +94,80 @@ namespace FlowDash.Infrastructure.Services
         {
             _tenantIdentifier.SetCurrentTenantName("public");
 
-            var migrationHistoryScript = "CREATE TABLE IF NOT EXISTS \"__EFMigrationsHistory\" (\r\n    \"MigrationId\" character varying(150) NOT NULL,\r\n    \"ProductVersion\" character varying(32) NOT NULL,\r\n    CONSTRAINT \"PK___EFMigrationsHistory\" PRIMARY KEY (\"MigrationId\")\r\n);";
-            var migrationHistoryTablesScript = "SET search_path TO \"$user\", public;\n" +
-                "CREATE TABLE IF NOT EXISTS \"public\".\"__SchemaBasedEFMigrationsHistory\" (\r\n    \"MigrationId\" character varying(150) NOT NULL,\r\n    \"SchemaId\" character varying(32) NOT NULL,\r\n    CONSTRAINT \"PK___SchemaBasedEFMigrationsHistory\" PRIMARY KEY (\"MigrationId\", \"SchemaId\")\r\n);" +
-                migrationHistoryScript;
-            await _dbConnection.ExecuteAsync(migrationHistoryTablesScript);
+            using var tx = _db.BeginTransaction();
 
-
-            using (var db = new FlowDashDbContext(_tenantIdentifier, _configuration))
+            try
             {
-                string script = string.Empty;
-                var pendingMigrations = db.Database.GetPendingMigrations();
-                var appliedMigrations = db.Database.GetAppliedMigrations();
+                await AcquireAdvisoryLock(tx);
 
-                if (pendingMigrations.Any())
-                {
-                    var migrator = db.GetService<IMigrator>();
-                    script = migrator.GenerateScript(fromMigration: appliedMigrations.Count() > 0 ? appliedMigrations.Last() : null, toMigration: pendingMigrations.Last());
-                    script = script.Replace(migrationHistoryScript, "");
-                    Console.WriteLine(script);
-                }
+                using var dbContext = new FlowDashDbContext(_tenantIdentifier, _configuration);
 
-                if (String.IsNullOrEmpty(script.Trim()))
-                {
+                var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+                if (!pendingMigrations.Any())
                     return;
-                }
 
-                var schemas = (await _dbConnection.QueryAsync<string>(
-                    "SELECT schema_name FROM information_schema.schemata"))
-                    .Where(w => w != "pg_catalog" && w != "public" && w != "information_schema" && !w.StartsWith("pg_") && w != "hangfire")
-                    .ToList();
+                var schemas = await GetTenantSchemas(tx);
 
-                // Remove insert to migration table from script
-                List<string> matchedInsertMigrations = new List<string>();
-
-                string pattern = @"INSERT INTO ""__EFMigrationsHistory"".*?\n.*?;\s*";
-
-                MatchCollection matches = Regex.Matches(script, pattern, RegexOptions.Singleline);
-
-                foreach (Match match in matches)
-                {
-                    if (!matchedInsertMigrations.Contains(match.Value))
-                    {
-                        matchedInsertMigrations.Add(match.Value.Trim());
-                    }
-                }
-
-                script = Regex.Replace(script, pattern, "", RegexOptions.Singleline);
-
-
-                // apply sanitized script to all schemas
                 foreach (var schema in schemas)
                 {
-                    var migrations = string.Join(", ", pendingMigrations.Select(s => $"'{s}'").ToList());
-                    var existingMigration = (await _dbConnection.QueryAsync<string>(
-                        $"SELECT \"MigrationId\" FROM public.\"__SchemaBasedEFMigrationsHistory\" where \"MigrationId\" in ({migrations}) and \"SchemaId\" = '{schema}'"))
-                        .FirstOrDefault();
-
-                    if (existingMigration != null)
-                    {
-                        continue;
-                    }
-
-                    string scriptToExecute = $"SET search_path TO {schema};\n" + script;
-
-                    await _dbConnection.ExecuteAsync(scriptToExecute);
-
-                    foreach (var migration in pendingMigrations)
-                    {
-                        await _dbConnection.ExecuteAsync(
-                             $"INSERT INTO public.\"__SchemaBasedEFMigrationsHistory\" (\"MigrationId\",  \"SchemaId\") VALUES ('{migration}', '{schema}')");
-                    }
+                    await ApplyMigrationsToSchema(schema);
                 }
 
-                if (matchedInsertMigrations.Count() > 0)
-                {
-                    var scriptToExecute = $"SET search_path TO \"$user\", public;\n" + String.Join("\n", matchedInsertMigrations);
-                    await _dbConnection.ExecuteAsync(scriptToExecute);
-                }
+                tx.Commit();
             }
+            catch (Exception ex)
+            {
+                tx.Rollback();
+                _logger.LogError(ex, "Database migration failed");
+                throw new InternalServerException("Database migration failed");
+            }
+        }
+
+        private async Task ApplyMigrationsToSchema(string schema)
+        {
+            _tenantIdentifier.SetCurrentTenantName(schema);
+
+            using var dbContext = new FlowDashDbContext(_tenantIdentifier, _configuration);
+
+            var migrator = dbContext.GetService<IMigrator>();
+
+            _logger.LogInformation("Applying migrations to schema {Schema}", schema);
+
+            // EF Core handles migration history internally per schema
+            await migrator.MigrateAsync();
+        }
+
+        private async Task<bool> SchemaExists(string schema, IDbTransaction tx)
+        {
+            return await _db.QuerySingleAsync<bool>(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = @schema)",
+                new { schema },
+                transaction: tx);
+        }
+
+        private async Task<List<string>> GetTenantSchemas(IDbTransaction tx)
+        {
+            return (await _db.QueryAsync<string>(
+                @"SELECT schema_name
+                  FROM information_schema.schemata
+                  WHERE schema_name NOT IN ('public','information_schema')
+                    AND schema_name NOT LIKE 'pg_%'
+                    AND schema_name <> 'hangfire';",
+                transaction: tx))
+                .ToList();
+        }
+
+        private static void ValidateTenantName(string tenantName)
+        {
+            if (!TenantNameRegex.IsMatch(tenantName))
+                throw new InternalServerException("Invalid tenant name format.");
+        }
+
+        private async Task AcquireAdvisoryLock(IDbTransaction tx)
+        {
+            await _db.ExecuteAsync(
+                "SELECT pg_advisory_lock(hashtext('tenant_migration_lock'));",
+                transaction: tx);
         }
     }
 }

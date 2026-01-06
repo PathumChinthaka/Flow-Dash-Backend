@@ -3,6 +3,7 @@
     public partial class TaskComment
     {
         public int Id { get; set; }
+        public Guid Guid { get; set; }
         public int TaskId { get;  set; }
         public string Comment { get; set; } = null!;
         public int CreatedById { get;  set; }
