@@ -17,6 +17,9 @@ namespace FlowDash.Infrastructure.EntityConfigurations
             builder.Property(e => e.CreatedById).HasColumnName("CreatedBy");
             builder.Property(e => e.UpdatedById).HasColumnName("UpdatedBy");
 
+            builder.Property(n => n.IsActive)
+                   .HasDefaultValue(true);
+
             builder.HasOne(p => p.CreatedBy)
                    .WithMany(u => u.ProjectCreatedBy)
                    .HasForeignKey(p => p.CreatedById)

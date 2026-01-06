@@ -3,6 +3,7 @@
     public partial class Notification
     {
         public int Id { get; set; }
+        public Guid Guid { get; set; }
         public int UserId { get; set; }
         public string Message { get; set; } = null!;
         public bool IsRead { get; set; } = false;

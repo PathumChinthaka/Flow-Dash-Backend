@@ -21,6 +21,9 @@ namespace FlowDash.Infrastructure.EntityConfigurations
             builder.Property(r => r.Description)
                    .HasMaxLength(500);
 
+            builder.Property(n => n.IsActive)
+                   .HasDefaultValue(true);
+
             builder.HasMany(r => r.UserRoles)
                    .WithOne(ur => ur.Role)
                    .HasForeignKey(ur => ur.RoleId)
