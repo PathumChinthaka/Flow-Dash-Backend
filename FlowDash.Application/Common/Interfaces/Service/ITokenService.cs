@@ -1,4 +1,4 @@
-﻿using FlowDash.Domain;
+﻿using FlowDash.Domain.Entities;
 
 namespace FlowDash.Application.Common.Interfaces.Service
 {

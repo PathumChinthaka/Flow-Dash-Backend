@@ -1,4 +1,4 @@
-﻿namespace FlowDash.Domain
+﻿namespace FlowDash.Domain.Entities
 {
     public partial class Notification
     {

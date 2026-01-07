@@ -1,5 +1,5 @@
 ﻿using FlowDash.Application.Common.Interfaces.Service;
-using FlowDash.Domain;
+using FlowDash.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;

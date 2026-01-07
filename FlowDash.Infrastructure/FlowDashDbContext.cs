@@ -1,8 +1,8 @@
 ﻿using FlowDash.Application.Common.Interfaces.Service;
-using FlowDash.Domain;
+using FlowDash.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using TaskModel = FlowDash.Domain.Task;
+using TaskModel = FlowDash.Domain.Entities.Task;
 
 namespace FlowDash.Infrastructure
 {
