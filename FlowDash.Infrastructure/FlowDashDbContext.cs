@@ -32,6 +32,7 @@ namespace FlowDash.Infrastructure
         public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
         public DbSet<User> Users => Set<User>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -26,5 +26,6 @@
         public virtual ICollection<Team> TeamUpdatedBy { get; set; } = new List<Team>();
         public virtual ICollection<TaskActivityLog> TaskChangedBy { get; set; } = new List<TaskActivityLog>();
         public virtual ICollection<TaskComment> TaskCommentCreatedBy { get; set; } = new List<TaskComment>();
+        public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }
