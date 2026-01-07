@@ -1,5 +1,7 @@
-﻿using FlowDash.Application.Common.Interfaces.Service;
+﻿using FlowDash.Application.Authentication.Common;
+using FlowDash.Application.Common.Interfaces.Service;
 using FlowDash.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,29 +20,37 @@ namespace FlowDash.Infrastructure.Services
             _config = config;
         }
 
-        public string CreateAccessToken(User user)
+        public TokenResult CreateAccessToken(User user)
         {
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email)
+                new Claim(JwtRegisteredClaimNames.Name, $"{user.FirstName} {user.LastName}"),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
+                new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
+                new Claim(JwtRegisteredClaimNames.Jti, user.Id.ToString()),
             };
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["JwtSettings:Secret"]!)
             );
 
-            var token = new JwtSecurityToken(
+            var tokenExpireOn = DateTime.UtcNow.AddMinutes(
+                int.Parse(_config["JwtSettings:AccessTokenMinutes"]!)
+            );
+
+            var jwtSecurityToken = new JwtSecurityToken(
                 issuer: _config["JwtSettings:Issuer"],
                 audience: _config["JwtSettings:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse(_config["JwtSettings:AccessTokenMinutes"]!)
-                ),
+                expires: tokenExpireOn,
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            string token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+
+            return new TokenResult(token.ToString(), tokenExpireOn);
         }
 
         public RefreshToken CreateRefreshToken()
@@ -52,6 +62,19 @@ namespace FlowDash.Infrastructure.Services
                     int.Parse(_config["JwtSettings:RefreshTokenDays"]!)
                 )
             };
+        }
+
+        public CookieOptions SetRefreshTokenExpiary(RefreshToken refreshToken)
+        {
+            var cookieOption = new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = SameSiteMode.None,
+                Secure = true,
+                Expires = refreshToken.ExpiresOn
+            };
+
+            return cookieOption;
         }
     }
 }

@@ -69,7 +69,7 @@ namespace FlowDash.Infrastructure
             // JWT settings
             services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
-            //services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+            services.AddSingleton<ITokenService, TokenService>();
 
             var jwtSettings = configuration
                 .GetSection(JwtSettings.SectionName)

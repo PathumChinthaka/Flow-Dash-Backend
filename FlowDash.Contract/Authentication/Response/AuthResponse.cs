@@ -4,6 +4,9 @@
     (
         string AccessToken,
         string RefreshToken,
-        DateTime AccessTokenExpiresOn
+        DateTime AccessTokenExpiresOn,
+        string Email,
+        string FirstName,
+        string LastName
     );
 }
