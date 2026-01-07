@@ -1,8 +1,8 @@
 ﻿using FlowDash.Application.Common.Interfaces.Service;
-using FlowDash.Domain;
+using FlowDash.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using TaskModel = FlowDash.Domain.Task;
+using TaskModel = FlowDash.Domain.Entities.Task;
 
 namespace FlowDash.Infrastructure
 {
@@ -32,6 +32,7 @@ namespace FlowDash.Infrastructure
         public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
         public DbSet<User> Users => Set<User>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

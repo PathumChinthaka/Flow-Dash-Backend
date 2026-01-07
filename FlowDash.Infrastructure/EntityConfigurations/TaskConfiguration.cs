@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowDash.Infrastructure.EntityConfigurations
 {
-    public class TaskConfiguration : IEntityTypeConfiguration<FlowDash.Domain.Task>
+    public class TaskConfiguration : IEntityTypeConfiguration<Domain.Entities.Task>
     {
-        public void Configure(EntityTypeBuilder<FlowDash.Domain.Task> builder)
+        public void Configure(EntityTypeBuilder<Domain.Entities.Task> builder)
         {
             builder.HasKey(e => e.Id).HasName("Task_pkey");
             builder.ToTable("Task");
