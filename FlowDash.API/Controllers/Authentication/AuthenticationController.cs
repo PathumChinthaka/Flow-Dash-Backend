@@ -13,7 +13,8 @@ namespace FlowDash.API.Controllers.Authentication
 {
     [ApiController]
     [SwaggerTag("Authentication")]
-    [Route("auth")]
+    [Route("api/v{version:apiVersion}/auth")]
+    [ApiVersion("1.0")]
     public class AuthenticationController : ControllerBase
     {
         private readonly IMapper _mapper;
