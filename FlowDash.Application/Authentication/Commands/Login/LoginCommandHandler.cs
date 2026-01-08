@@ -2,6 +2,7 @@
 using FlowDash.Application.Common.Interfaces;
 using FlowDash.Application.Common.Interfaces.Service;
 using FlowDash.Application.Exceptions.Client;
+using FlowDash.Application.Exceptions.Server;
 using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -36,32 +37,40 @@ namespace FlowDash.Application.Authentication.Commands.Login
 
         public async Task<AuthResult> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByEmail(request.Email);
-            var passwordHash = _md5HashGenerator.Generate(request.Password);
-
-            if (user == null)
+            try
             {
-                throw new BadRequestException("User name or password is incorrect");
+                var user = await _userRepository.GetByEmail(request.Email);
+                var passwordHash = _md5HashGenerator.Generate(request.Password);
+
+                if (user == null)
+                {
+                    throw new BadRequestException("User name or password is incorrect");
+                }
+
+                if (user.Password != passwordHash)
+                {
+                    throw new UnauthorizedException("User name or password is incorrect.");
+                }
+
+                var acessToken = _tokenService.CreateAccessToken(user);
+                var refreshToken = _tokenService.CreateRefreshToken();
+                var cookiesOption = _tokenService.SetRefreshTokenExpiary(refreshToken);
+                var loginResult = _mapper.Map<AuthResult>((user, acessToken, refreshToken, cookiesOption));
+                var SuccessUserDetails = new
+                {
+                    UserId = user.Id,
+                    UserEmail = user.Email,
+                };
+
+                _logger.LogInformation("Login Successful: {SuccessUserDetails}", JsonSerializer.Serialize(SuccessUserDetails));
+
+                return loginResult;
             }
-
-            if (user.Password != passwordHash)
+            catch(Exception ex)
             {
-                throw new UnauthorizedException("User name or password is incorrect.");
+                _logger.LogError(ex, "Login failed for email {Email}", request.Email);
+                throw new InternalServerException($"Login Failed for Email {request.Email}");
             }
-
-            var acessToken = _tokenService.CreateAccessToken(user);
-            var refreshToken = _tokenService.CreateRefreshToken();
-            var cookiesOption = _tokenService.SetRefreshTokenExpiary(refreshToken);
-            var loginResult = _mapper.Map<AuthResult>((user, acessToken, refreshToken, cookiesOption));
-            var SuccessUserDetails = new
-            {
-                UserId = user.Id,
-                UserEmail = user.Email,
-            };
-
-            _logger.LogInformation("Login Successful: {SuccessUserDetails}", JsonSerializer.Serialize(SuccessUserDetails));
-
-            return loginResult;
         }
     }
 }
