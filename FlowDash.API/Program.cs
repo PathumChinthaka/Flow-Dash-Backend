@@ -1,4 +1,6 @@
+using FlowDash.API;
 using FlowDash.API.Middleware;
+using FlowDash.Application;
 using FlowDash.Infrastructure;
 using FlowDash.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 // Add services to the container.
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services
+        .AddInfrastructure(builder.Configuration)
+        .AddPresentation(builder.Configuration)
+        .AddApplication(builder.Configuration);
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
