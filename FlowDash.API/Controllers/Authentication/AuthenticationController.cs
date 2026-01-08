@@ -11,11 +11,9 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace FlowDash.API.Controllers.Authentication
 {
-    [ApiController]
     [SwaggerTag("Authentication")]
-    [Route("api/v{version:apiVersion}/auth")]
-    [ApiVersion("1.0")]
-    public class AuthenticationController : ControllerBase
+    [Route("auth")]
+    public class AuthenticationController : ApiController
     {
         private readonly IMapper _mapper;
         private readonly ISender _mediator;

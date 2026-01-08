@@ -1,4 +1,4 @@
-﻿using FlowDash.API.Common.Mapping;
+﻿using FlowDash.API.Common.Mappings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 

@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Http;
 
 namespace FlowDash.Application.Common.Mappings
 {
-    internal class AuthenticationMappingConfig : IRegister
+    public class AuthenticationMappingConfig : IRegister
     {
         public void Register(TypeAdapterConfig config)
         {
-            config.NewConfig<(User User, TokenResult AccessToken, RefreshToken RefreshToken, CookieOptions cookiesOptions), AuthResult>()
-                 .Map(dest => dest.AccessToken, src => src.AccessToken)
-                 .Map(dest => dest.AccessTokenExpiresOn, src => src.AccessToken.ExpiresOn)
+            config.NewConfig<(User User, TokenResult TokenResult, RefreshToken RefreshToken, CookieOptions cookiesOptions), AuthResult>()
+                 .Map(dest => dest.AccessToken, src => src.TokenResult.Value)
+                 .Map(dest => dest.AccessTokenExpiresOn, src => src.TokenResult.ExpiresOn)
                  .Map(dest => dest.CookieTokenExpiaryOptions, src => src.cookiesOptions)
                  .Map(dest => dest.RefreshToken, src => src.RefreshToken.Token)
                  .Map(dest => dest.FirstName, src => src.User.FirstName)

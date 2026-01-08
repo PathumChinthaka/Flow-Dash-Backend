@@ -2,7 +2,7 @@
 using MapsterMapper;
 using System.Reflection;
 
-namespace FlowDash.API.Common.Mapping
+namespace FlowDash.API.Common.Mappings
 {
     public static class DependencyInjection
     {

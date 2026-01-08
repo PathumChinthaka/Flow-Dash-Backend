@@ -1,4 +1,7 @@
-﻿using FlowDash.Application.Common.Interfaces.Service;
+﻿using FlowDash.Application.Common.Interfaces;
+using FlowDash.Application.Common.Interfaces.Service;
+using FlowDash.Infrastructure.Repositories.Auth;
+using FlowDash.Infrastructure.Repositories.User;
 using FlowDash.Infrastructure.Services;
 using FlowDash.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -52,6 +55,13 @@ namespace FlowDash.Infrastructure
             // Services
             services.AddScoped<ITenantIdentifierService, TenantIdentifierService>();
             services.AddScoped<ITenantCreationService, TenantCreationService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+            services.AddSingleton<IMd5HashGenerator, Md5HashGenerator>();
+
+            // Repositories
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
             // DB Connection
             services.AddDbContext<FlowDashDbContext>(option => option.UseNpgsql(
