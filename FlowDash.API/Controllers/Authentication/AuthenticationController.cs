@@ -1,5 +1,6 @@
 ﻿using FlowDash.Application.Authentication.Commands.Login;
 using FlowDash.Application.Authentication.Commands.RefreshToken;
+using FlowDash.Application.Authentication.Commands.Register;
 using FlowDash.Contract.Authentication.Request;
 using FlowDash.Contract.Authentication.Response;
 using MapsterMapper;
@@ -17,7 +18,7 @@ namespace FlowDash.API.Controllers.Authentication
     {
         private readonly IMapper _mapper;
         private readonly ISender _mediator;
-        private readonly ILogger<AuthenticationController> _logger;  // Add logger
+        private readonly ILogger<AuthenticationController> _logger; 
 
         public AuthenticationController
         (
@@ -32,6 +33,22 @@ namespace FlowDash.API.Controllers.Authentication
         }
 
         [AllowAnonymous]
+        [HttpPost("register")]
+        [SwaggerOperation(Summary = "Register new user")]
+        [ProducesResponseType(201)]
+        public async Task<IActionResult> LoginAsync(RegisterRequest registerRequest)
+        {
+            _logger.LogInformation("User registration attempt");
+
+            var command = _mapper.Map<RegisterCommand>(registerRequest);
+            await _mediator.Send(command);
+
+            _logger.LogInformation("User registration successfully");
+
+            return Created();
+        }
+
+        [AllowAnonymous]
         [HttpPost("login")]
         [SwaggerOperation(Summary = "Authenticates the user and generates an access token.")]
         [ProducesResponseType(typeof(AuthResponse), 200)]
@@ -39,8 +56,8 @@ namespace FlowDash.API.Controllers.Authentication
         {
             _logger.LogInformation("User login attempt");
 
-            var query = _mapper.Map<LoginCommand>(loginRequest);
-            var authResult = await _mediator.Send(query);
+            var command = _mapper.Map<LoginCommand>(loginRequest);
+            var authResult = await _mediator.Send(command);
             var response = _mapper.Map<AuthResponse>(authResult);
 
             Response.Cookies.Append("RefreshToken", authResult.RefreshToken, authResult.CookieTokenExpiaryOptions);

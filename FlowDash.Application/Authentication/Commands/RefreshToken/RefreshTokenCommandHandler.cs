@@ -27,14 +27,21 @@ namespace FlowDash.Application.Authentication.Commands.RefreshToken
 
         public async Task<AuthResult> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
-            var refreshToken = await _refreshTokenRepository.GetByToken(request.Token) 
+            try
+            {
+                var refreshToken = await _refreshTokenRepository.GetByToken(request.Token)
                 ?? throw new UnauthorizedException("Provided token is not valid");
 
-            var token = _jwtTokenGenerator.CreateAccessToken(refreshToken.User);
+                var token = _jwtTokenGenerator.CreateAccessToken(refreshToken.User);
 
-            var cookiesOption = _jwtTokenGenerator.SetRefreshTokenExpiary(refreshToken);
+                var cookiesOption = _jwtTokenGenerator.SetRefreshTokenExpiary(refreshToken);
 
-            return _mapper.Map<AuthResult>((refreshToken.User, token, refreshToken, cookiesOption));
+                return _mapper.Map<AuthResult>((refreshToken.User, token, refreshToken, cookiesOption));
+            }
+            catch(Exception ex)
+            {
+                throw new UnauthorizedException("Could not refresh token", ex);
+            }
         }
     }
 }
