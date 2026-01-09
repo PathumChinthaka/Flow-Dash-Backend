@@ -1,4 +1,5 @@
 ﻿using FlowDash.Application.Authentication.Common;
+using FlowDash.Application.Common.Interfaces;
 using FlowDash.Application.Common.Interfaces.Service;
 using FlowDash.Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -8,15 +9,18 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FlowDash.Infrastructure.Services
 {
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _config;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
 
-        public TokenService(IConfiguration config)
+        public TokenService(IConfiguration config, IRefreshTokenRepository refreshTokenRepository)
         {
+            _refreshTokenRepository = refreshTokenRepository;
             _config = config;
         }
 
@@ -53,15 +57,23 @@ namespace FlowDash.Infrastructure.Services
             return new TokenResult(token.ToString(), tokenExpireOn);
         }
 
-        public RefreshToken CreateRefreshToken()
+        public async Task<RefreshToken> CreateRefreshToken(int userId)
         {
-            return new RefreshToken
+            string tokenWithSpecialCharacters = $"{Guid.NewGuid()}-{Convert.ToBase64String(RandomNumberGenerator.GetBytes(48))}";
+            string tokenWithoutSpecialCharacters = Regex.Replace(tokenWithSpecialCharacters, "[^0-9a-zA-Z]+", "");
+
+            var refreshToken =  new RefreshToken
             {
-                Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+                Token = tokenWithoutSpecialCharacters,
+                UserId = userId,
+                IsRevoked = false,
                 ExpiresOn = DateTime.UtcNow.AddDays(
                     int.Parse(_config["JwtSettings:RefreshTokenDays"]!)
                 )
             };
+
+            await _refreshTokenRepository.Create(refreshToken);
+            return refreshToken;
         }
 
         public CookieOptions SetRefreshTokenExpiary(RefreshToken refreshToken)

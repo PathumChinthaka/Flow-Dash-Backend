@@ -52,16 +52,16 @@ namespace FlowDash.Infrastructure
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+            // Repositories
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
             // Services
             services.AddScoped<ITenantIdentifierService, TenantIdentifierService>();
             services.AddScoped<ITenantCreationService, TenantCreationService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();
             services.AddSingleton<IMd5HashGenerator, Md5HashGenerator>();
-
-            // Repositories
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
             // DB Connection
             services.AddDbContext<FlowDashDbContext>(option => option.UseNpgsql(
@@ -78,8 +78,6 @@ namespace FlowDash.Infrastructure
         {
             // JWT settings
             services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
-
-            services.AddSingleton<ITokenService, TokenService>();
 
             var jwtSettings = configuration
                 .GetSection(JwtSettings.SectionName)

@@ -53,7 +53,7 @@ namespace FlowDash.Application.Authentication.Commands.Login
                 }
 
                 var acessToken = _tokenService.CreateAccessToken(user);
-                var refreshToken = _tokenService.CreateRefreshToken();
+                var refreshToken = await _tokenService.CreateRefreshToken(user.Id);
                 var cookiesOption = _tokenService.SetRefreshTokenExpiary(refreshToken);
                 var SuccessUserDetails = new
                 {
@@ -63,7 +63,7 @@ namespace FlowDash.Application.Authentication.Commands.Login
 
                 _logger.LogInformation("Login Successful: {SuccessUserDetails}", JsonSerializer.Serialize(SuccessUserDetails));
 
-                return new AuthResult(acessToken.Value, refreshToken.Token, acessToken.ExpiresOn, user.Email, user.FirstName, user.LastName, cookiesOption);
+                return _mapper.Map<AuthResult>((user: user, tokenResult: acessToken, refreshToken: refreshToken, cookiesOptions: cookiesOption));
             }
             catch(Exception ex)
             {

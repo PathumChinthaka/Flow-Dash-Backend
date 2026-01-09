@@ -9,14 +9,14 @@ namespace FlowDash.Application.Common.Mappings
     {
         public void Register(TypeAdapterConfig config)
         {
-            config.NewConfig<(User User, TokenResult TokenResult, RefreshToken RefreshToken, CookieOptions cookiesOptions), AuthResult>()
-                 .Map(dest => dest.AccessToken, src => src.TokenResult.Value)
-                 .Map(dest => dest.AccessTokenExpiresOn, src => src.TokenResult.ExpiresOn)
+            config.NewConfig<(User user, TokenResult tokenResult, RefreshToken refreshToken, CookieOptions cookiesOptions), AuthResult>()
+                 .Map(dest => dest.AccessToken, src => src.tokenResult.Value)
+                 .Map(dest => dest.AccessTokenExpiresOn, src => src.tokenResult.ExpiresOn)
                  .Map(dest => dest.CookieTokenExpiaryOptions, src => src.cookiesOptions)
-                 .Map(dest => dest.RefreshToken, src => src.RefreshToken.Token)
-                 .Map(dest => dest.FirstName, src => src.User.FirstName)
-                 .Map(dest => dest.LastName, src => src.User.LastName)
-                 .Map(dest => dest.Email, src => src.User!.Email);
+                 .Map(dest => dest.RefreshToken, src => src.refreshToken.Token)
+                 .Map(dest => dest.FirstName, src => src.user.FirstName)
+                 .Map(dest => dest.LastName, src => src.user.LastName)
+                 .Map(dest => dest.Email, src => src.user!.Email);
         }
     }
 }

@@ -15,8 +15,6 @@ namespace FlowDash.Infrastructure.Repositories.Auth
 
         public async Task<RefreshToken> Create(RefreshToken request)
         {
-            request.IsRevoked = false;
-
             _dbContext.RefreshTokens.Add(request);
             await _dbContext.SaveChangesAsync();
             return request;
