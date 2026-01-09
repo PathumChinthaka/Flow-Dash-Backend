@@ -7,7 +7,7 @@ namespace FlowDash.Application.Common.Interfaces.Service
     public interface ITokenService
     {
         TokenResult CreateAccessToken(User user);
-        RefreshToken CreateRefreshToken();
+        Task<RefreshToken> CreateRefreshToken(int userId);
         CookieOptions SetRefreshTokenExpiary(RefreshToken refreshToken);
     }
-}
+} 
