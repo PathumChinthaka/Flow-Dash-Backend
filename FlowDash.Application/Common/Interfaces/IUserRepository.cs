@@ -1,13 +1,16 @@
-﻿using FlowDash.Domain.Entities;
+﻿using FlowDash.Application.Common.Pagination;
+using FlowDash.Application.User.Queries.GetList;
+using UserModel = FlowDash.Domain.Entities.User;
 
 namespace FlowDash.Application.Common.Interfaces
 {
     public interface IUserRepository
     {
-        Task<User> Create(User user);
-        Task<User> Update(User user);
-        Task<User> DeactivateUser(User user);
-        Task<User?> Get(int id);
-        Task<User?> GetByEmail(string email);
+        Task<UserModel> Create(UserModel user, CancellationToken cancellationToken);
+        Task<UserModel> Update(UserModel user, CancellationToken cancellationToken);
+        Task<UserModel> DeactivateUser(UserModel user, CancellationToken cancellationToken);
+        Task<UserModel?> Get(int id, CancellationToken cancellationToken);
+        Task<UserModel?> GetByEmail(string email, CancellationToken cancellationToken);
+        Task<PaginatedResult<UserModel>> GetList(GetUsersQuery query, CancellationToken cancellationToken);
     }
 }

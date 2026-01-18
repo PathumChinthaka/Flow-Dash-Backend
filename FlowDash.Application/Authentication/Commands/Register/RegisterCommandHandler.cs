@@ -1,9 +1,9 @@
 ﻿using FlowDash.Application.Common.Interfaces;
 using FlowDash.Application.Exceptions.Client;
 using FlowDash.Application.Exceptions.Server;
-using FlowDash.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using UserModel = FlowDash.Domain.Entities.User;
 
 namespace FlowDash.Application.Authentication.Commands.Register
 {
@@ -29,14 +29,14 @@ namespace FlowDash.Application.Authentication.Commands.Register
         {
             try
             {
-                var user = await _userRepository.GetByEmail(request.Email);
+                var user = await _userRepository.GetByEmail(request.Email, cancellationToken);
 
                 if (user != null)
                 {
                     throw new ConflictException("Email already registered");
                 }
 
-                var newUser = new User
+                var newUser = new UserModel
                 {
                     Email = request.Email.Trim().ToLower(),
                     FirstName = request.FirstName.Trim(),
@@ -44,7 +44,7 @@ namespace FlowDash.Application.Authentication.Commands.Register
                     Password = _md5HashGenerator.Generate(request.Password)
                 };
 
-                await _userRepository.Create(newUser);
+                await _userRepository.Create(newUser, cancellationToken);
 
                 return new RegisterResult(newUser.Id);
             }

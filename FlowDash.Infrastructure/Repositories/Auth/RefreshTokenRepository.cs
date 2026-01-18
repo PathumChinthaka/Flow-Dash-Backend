@@ -17,13 +17,14 @@ namespace FlowDash.Infrastructure.Repositories.Auth
         {
             _dbContext.RefreshTokens.Add(request);
             await _dbContext.SaveChangesAsync();
+
             return request;
         }
 
         public async Task<RefreshToken?> GetByToken(string token)
         {
             return await _dbContext.RefreshTokens
-                .Where(x => x.Token == token && x.IsRevoked == false)
+                .Where(x => x.Token == token && !x.IsRevoked)
                 .Include(x => x.User)
                 .FirstOrDefaultAsync();
         }
@@ -41,7 +42,7 @@ namespace FlowDash.Infrastructure.Repositories.Auth
         public async Task<List<RefreshToken>> GetListByUserId(int userId)
         {
             return await _dbContext.RefreshTokens
-                .Where(x => x.UserId == userId && x.IsRevoked == false)
+                .Where(x => x.UserId == userId && !x.IsRevoked)
                 .Include(x => x.User)
                 .ToListAsync();
         }

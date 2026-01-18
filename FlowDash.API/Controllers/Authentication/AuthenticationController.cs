@@ -34,7 +34,7 @@ namespace FlowDash.API.Controllers.Authentication
         [AllowAnonymous]
         [HttpPost("register")]
         [SwaggerOperation(Summary = "Register new user")]
-        [ProducesResponseType(201)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> LoginAsync(RegisterRequest registerRequest)
         {
             _logger.LogInformation("User registration attempt");
@@ -50,7 +50,7 @@ namespace FlowDash.API.Controllers.Authentication
         [AllowAnonymous]
         [HttpPost("login")]
         [SwaggerOperation(Summary = "Authenticates the user and generates an access token.")]
-        [ProducesResponseType(typeof(AuthResponse), 200)]
+        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> LoginAsync(LoginRequest loginRequest)
         {
             _logger.LogInformation("User login attempt");
@@ -68,7 +68,7 @@ namespace FlowDash.API.Controllers.Authentication
         [AllowAnonymous]
         [HttpPost("tokens:refresh")]
         [SwaggerOperation(Summary = "Generate new access token using a refresh token.")]
-        [ProducesResponseType(typeof(AuthResponse), 200)]
+        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> RefreshToken()
         {
             _logger.LogInformation("Refreshing token");  // Log information

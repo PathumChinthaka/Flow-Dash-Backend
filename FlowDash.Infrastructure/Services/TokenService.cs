@@ -17,11 +17,13 @@ namespace FlowDash.Infrastructure.Services
     {
         private readonly IConfiguration _config;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly ITenantIdentifierService _tenantIdentifierService;
 
-        public TokenService(IConfiguration config, IRefreshTokenRepository refreshTokenRepository)
+        public TokenService(IConfiguration config, IRefreshTokenRepository refreshTokenRepository, ITenantIdentifierService tenantIdentifierService)
         {
             _refreshTokenRepository = refreshTokenRepository;
             _config = config;
+            _tenantIdentifierService = tenantIdentifierService;
         }
 
         public TokenResult CreateAccessToken(User user)
@@ -34,6 +36,7 @@ namespace FlowDash.Infrastructure.Services
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
                 new Claim(JwtRegisteredClaimNames.Jti, user.Id.ToString()),
+                new Claim("tenant", _tenantIdentifierService.GetCurrentTenantName()),
             };
 
             var key = new SymmetricSecurityKey(

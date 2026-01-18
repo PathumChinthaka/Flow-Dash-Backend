@@ -39,7 +39,7 @@ namespace FlowDash.Application.Authentication.Commands.Login
         {
             try
             {
-                var user = await _userRepository.GetByEmail(request.Email);
+                var user = await _userRepository.GetByEmail(request.Email, cancellationToken);
                 var passwordHash = _md5HashGenerator.Generate(request.Password);
 
                 if (user == null)
